@@ -138,5 +138,6 @@ int main(int argc, char *argv[])
             modify(k, x);
         }
     }
+    printf("hello");
     return 0;
 }
