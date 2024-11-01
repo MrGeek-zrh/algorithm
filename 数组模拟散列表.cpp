@@ -1,4 +1,5 @@
 // 数组模拟散列表
+// 使用拉链法解决hash冲突
 #include <cstdio>
 #include <iostream>
 

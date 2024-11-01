@@ -3,3 +3,7 @@ actions/
 output.txt
 tmp.dSYM/
 tmp
+
+.auto-coder/
+actions/
+output.txt
