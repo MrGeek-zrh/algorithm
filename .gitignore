@@ -7,3 +7,5 @@ tmp
 .auto-coder/
 actions/
 output.txt
+
+.cache
