@@ -13,6 +13,7 @@ unsigned long long ha[N] = { 0 };
 void get_prefix_hash(int n)
 {
     for (int i = 1; i <= n; i++) {
+        // 通过debug，发现这里i不是++，而是i += 2，为啥？没搞懂
         ha[i] = ha[i - 1] * P + a[i];
     }
 }
