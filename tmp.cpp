@@ -23,7 +23,7 @@ int h(int l, int r)
     if (l == 1) {
         return ha[r];
     } else {
-        return h(1, r) - h(1, l - 1) * P ^ (r - l + 1);
+        return h(1, r) - h(1, l - 1) * (P ^ (r - l + 1));
     }
 }
 
