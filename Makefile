@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Wall -g -O0
+CXXFLAGS=-Wall -g -O0 -std=c++14
 TARGET=tmp
 
 # ANSI color codes
