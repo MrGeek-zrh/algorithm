@@ -18,6 +18,17 @@ int n, m;
 
 enum { VISITED = -1, VISITABLE, UNVISITABLE };
 
+int code_num(int x, int y)
+{
+    return (x - 1) * m + y;
+}
+
+void decode_num(int c, int *x, int *y)
+{
+    *x = (c % m == 0) ? c / m : c / m + 1;
+    *y = c - (*x - 1) * m;
+}
+
 void make_visitable_child_in_queue(int x, int y)
 {
     int child1_x = x - 1;
@@ -32,17 +43,21 @@ void make_visitable_child_in_queue(int x, int y)
     int child4_x = x;
     int child4_y = y + 1;
 
-    if (child1_x >= 1 && child1_y >= 1 && a[child1_x][child1_y] == VISITABLE) {
+    if (child1_x >= 1 && child1_y >= 1 && child1_x <= n && child1_y <= m && a[child1_x][child1_y] == VISITABLE) {
         q.push(make_pair(child1_x, child1_y));
+        parent[child1_x][child1_y] = code_num(x, y);
     }
-    if (child2_x >= 1 && child2_y >= 1 && a[child2_x][child2_y] == VISITABLE) {
+    if (child2_x >= 1 && child2_y >= 1 && child2_x <= n && child2_y <= m && a[child2_x][child2_y] == VISITABLE) {
         q.push(make_pair(child2_x, child2_y));
+        parent[child2_x][child2_y] = code_num(x, y);
     }
-    if (child3_x >= 1 && child3_y >= 1 && a[child3_x][child3_y] == VISITABLE) {
+    if (child3_x >= 1 && child3_y >= 1 && child3_x <= n && child3_y <= m && a[child3_x][child3_y] == VISITABLE) {
         q.push(make_pair(child3_x, child3_y));
+        parent[child3_x][child3_y] = code_num(x, y);
     }
-    if (child4_x >= 1 && child4_y >= 1 && a[child4_x][child4_y] == VISITABLE) {
+    if (child4_x >= 1 && child4_y >= 1 && child4_x <= n && child4_y <= m && a[child4_x][child4_y] == VISITABLE) {
         q.push(make_pair(child4_x, child4_y));
+        parent[child4_x][child4_y] = code_num(x, y);
     }
 }
 
@@ -54,23 +69,12 @@ void visit_queue(int *x, int *y)
     a[*x][*y] = VISITED;
 }
 
-int code_num(int x, int y)
-{
-    return (x - 1) * m + y;
-}
-
-void decode_num(int c, int *x, int *y)
-{
-    *x = c / m + 1;
-    *y = c % m;
-}
-
 int reverse_travel(int x, int y)
 {
     int times = 0;
     int parent_x = x;
     int parent_y = y;
-    while (parent_x != 1 && parent_y != 1) {
+    while (parent_x != 1 || parent_y != 1) {
         decode_num(parent[x][y], &parent_x, &parent_y);
         x = parent_x;
         y = parent_y;
@@ -84,8 +88,7 @@ int bfs(int x, int y)
     a[x][y] = VISITED;
     int child_x, child_y;
     make_visitable_child_in_queue(x, y);
-    while ((visit_queue(&child_x, &child_y), child_x != dest_x && child_y != dest_y) && !q.empty()) {
-        parent[child_x][child_y] = code_num(x, y);
+    while (!q.empty() && (visit_queue(&child_x, &child_y), child_x != dest_x || child_y != dest_y)) {
         make_visitable_child_in_queue(child_x, child_y);
     }
     return reverse_travel(child_x, child_y);
