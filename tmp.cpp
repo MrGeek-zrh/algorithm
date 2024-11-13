@@ -1,101 +1,111 @@
-// n皇后问题
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
+#include <queue>
 #include <utility>
-#include <vector>
 
 using namespace std;
 
-const int N = 10;
+const int N = 110;
+//  存储数据
+int a[N][N];
+// 存储节点的父亲
+int parent[N][N];
 
-enum { UNVISITED, VISITED, CLOSED };
+int dest_x, dest_y;
 
-int visited[N][N] = { { UNVISITED } };
+queue<pair<int, int>> q;
 
-// 存储符合条件的数组
-vector<pair<int, int>> pos;
-// 已经收集到的元素个数，到达n的时候，说明一轮就收集满了
-int current_length = 0;
+int n, m;
 
-int n;
+enum { VISITED = -1, VISITABLE, UNVISITABLE };
 
-double ra(int x1, int y1, int x2, int y2)
+void make_visitable_child_in_queue(int x, int y)
 {
-    return abs((y1 - y2) * 1.0 / (x1 - x2));
-}
+    int child1_x = x - 1;
+    int child1_y = y;
 
-bool ratio_not_one_or_zero(int x, int y)
-{
-    for (int i = 0; i < pos.size(); i++) {
-        double ratio = ra(pos[i].first, pos[i].second, x, y);
-        if (ratio == 1.0 || ratio == 0.0) {
-            return false;
-        }
+    int child2_x = x + 1;
+    int child2_y = y;
+
+    int child3_x = x;
+    int child3_y = y - 1;
+
+    int child4_x = x;
+    int child4_y = y + 1;
+
+    if (child1_x >= 1 && child1_y >= 1 && a[child1_x][child1_y] == VISITABLE) {
+        q.push(make_pair(child1_x, child1_y));
     }
-    return true;
-}
-
-// 这里增加筛选条件，除了需要是UNVISITED，还需要满足和当前的点的斜率绝对值不是1
-// 这里的next所在的行是root所在行的下一行
-bool has_unvisited(int row, int *next)
-{
-    for (int i = 1; i <= n; i++) {
-        if (visited[row][i] == UNVISITED && ratio_not_one_or_zero(row, i)) {
-            *next = i;
-            return true;
-        }
+    if (child2_x >= 1 && child2_y >= 1 && a[child2_x][child2_y] == VISITABLE) {
+        q.push(make_pair(child2_x, child2_y));
     }
-    return false;
-}
-
-void print()
-{
-    for (int i = 0; i < pos.size(); i++) {
-        cout << pos[i].first << " " << pos[i].second << endl;
+    if (child3_x >= 1 && child3_y >= 1 && a[child3_x][child3_y] == VISITABLE) {
+        q.push(make_pair(child3_x, child3_y));
     }
-    printf("\n");
-}
-
-void clear_visited(int root)
-{
-    for (int i = 1; i <= n; i++) {
-        visited[root][i] = UNVISITED;
+    if (child4_x >= 1 && child4_y >= 1 && a[child4_x][child4_y] == VISITABLE) {
+        q.push(make_pair(child4_x, child4_y));
     }
 }
 
-void dfs(int row, int root)
+void visit_queue(int *x, int *y)
 {
-    int next = UNVISITED;
-    while (row < n && has_unvisited(row + 1, &next)) {
-        current_length++;
-        pos.push_back(make_pair(row + 1, next));
+    *x = q.front().first;
+    *y = q.front().second;
+    q.pop();
+    a[*x][*y] = VISITED;
+}
 
-        visited[row + 1][next] = VISITED;
-        dfs(row + 1, next);
-        visited[row + 1][next] = CLOSED;
+int code_num(int x, int y)
+{
+    return (x - 1) * m + y;
+}
+
+void decode_num(int c, int *x, int *y)
+{
+    *x = c / m + 1;
+    *y = c % m;
+}
+
+int reverse_travel(int x, int y)
+{
+    int times = 0;
+    int parent_x = x;
+    int parent_y = y;
+    while (parent_x != 1 && parent_y != 1) {
+        decode_num(parent[x][y], &parent_x, &parent_y);
+        x = parent_x;
+        y = parent_y;
+        times++;
     }
-    if (!has_unvisited(row + 1, &next) || row == n) {
-        if (current_length == n) {
-            print();
-        }
-        current_length--;
-        pos.pop_back();
-        clear_visited(root);
-        return;
+    return times;
+}
+
+int bfs(int x, int y)
+{
+    a[x][y] = VISITED;
+    int child_x, child_y;
+    make_visitable_child_in_queue(x, y);
+    while ((visit_queue(&child_x, &child_y), child_x != dest_x && child_y != dest_y) && !q.empty()) {
+        parent[child_x][child_y] = code_num(x, y);
+        make_visitable_child_in_queue(child_x, child_y);
     }
+    return reverse_travel(child_x, child_y);
 }
 
 int main(int argc, char *argv[])
 {
-    scanf("%d", &n);
-
-    for (int root = 1; root <= n; root++) {
-        memset(visited, UNVISITED, sizeof(int) * N * N);
-
-        dfs(1, root);
+    cin >> n >> m;
+    dest_x = n;
+    dest_y = m;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            cin >> a[i][j];
+        }
     }
+
+    int current_x = 1;
+    int current_y = 1;
+    int times = bfs(current_x, current_y);
+    cout << times << endl;
 
     return 0;
 }
