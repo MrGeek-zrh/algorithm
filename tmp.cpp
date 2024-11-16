@@ -51,9 +51,9 @@ bool get_child_str_of_x(string s, int x_idx)
             string child_str = swap_get_child_str(s, x_idx, child_idx);
             if (unvisited(child_str)) {
                 a.push(child_str);
-                times_map[child_str] = times++;
+                times_map[child_str] = times + 1;
                 if (child_str == "12345678x") {
-                    // cout << times_map[child_str];
+                    cout << times_map[child_str];
                     return true;
                 }
             }
@@ -83,7 +83,6 @@ int main(int argc, char *argv[])
             current_x_idx = i;
         }
     }
-    cout << str;
     a.push(str);
     times_map[str] = 0;
 
