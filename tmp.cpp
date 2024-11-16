@@ -1,124 +1,101 @@
-// 走迷宫
 #include <iostream>
 #include <queue>
-#include <utility>
+#include <string>
+#include <map>
 
 using namespace std;
 
-const int N = 110;
-//  存储数据
-int a[N][N];
-// 存储节点的父亲
-int parent[N][N];
+queue<string> a;
+map<string, int> times_map;
 
-int dest_x, dest_y;
-
-queue<pair<int, int>> q;
-
-int n, m;
-
-enum { VISITED = -1, VISITABLE, UNVISITABLE };
+int child_offset_x[4] = { -1, 1, 0, 0 };
+int child_offset_y[4] = { 0, 0, -1, 1 };
 
 int code_num(int x, int y)
 {
-    return (x - 1) * m + y;
+    return 3 * x + y;
 }
 
-void decode_num(int c, int *x, int *y)
+void decode_num(int num, int *x, int *y)
 {
-    *x = (c % m == 0) ? c / m : c / m + 1;
-    *y = c - (*x - 1) * m;
+    *x = num / 3;
+    *y = num % 3;
 }
 
-void make_visitable_child_in_queue(int x, int y)
+string swap_get_child_str(string s, int x_idx, int child_idx)
 {
-    int child1_x = x - 1;
-    int child1_y = y;
-
-    int child2_x = x + 1;
-    int child2_y = y;
-
-    int child3_x = x;
-    int child3_y = y - 1;
-
-    int child4_x = x;
-    int child4_y = y + 1;
-
-    int num = code_num(x, y);
-
-    // 上下左右的孩子节点
-    if (child1_x >= 1 && child1_y >= 1 && child1_x <= n && child1_y <= m && a[child1_x][child1_y] == VISITABLE) {
-        q.push(make_pair(child1_x, child1_y));
-        parent[child1_x][child1_y] = num;
-        a[child1_x][child1_y] = VISITED;
-    }
-    if (child2_x >= 1 && child2_y >= 1 && child2_x <= n && child2_y <= m && a[child2_x][child2_y] == VISITABLE) {
-        q.push(make_pair(child2_x, child2_y));
-        parent[child2_x][child2_y] = num;
-        a[child2_x][child2_y] = VISITED;
-    }
-    if (child3_x >= 1 && child3_y >= 1 && child3_x <= n && child3_y <= m && a[child3_x][child3_y] == VISITABLE) {
-        q.push(make_pair(child3_x, child3_y));
-        parent[child3_x][child3_y] = num;
-        a[child3_x][child3_y] = VISITED;
-    }
-    if (child4_x >= 1 && child4_y >= 1 && child4_x <= n && child4_y <= m && a[child4_x][child4_y] == VISITABLE) {
-        q.push(make_pair(child4_x, child4_y));
-        parent[child4_x][child4_y] = num;
-        a[child4_x][child4_y] = VISITED;
-    }
+    char tmp = s[x_idx];
+    s[x_idx] = s[child_idx];
+    s[child_idx] = tmp;
+    return s;
 }
 
-void visit_queue(int *x, int *y)
+// str没在map中作为key出现过
+bool unvisited(string str)
 {
-    *x = q.front().first;
-    *y = q.front().second;
-    q.pop();
+    return times_map.count(str) == 0;
 }
 
-int reverse_travel(int x, int y)
+// 获取到当前x所在位置的所有子串，如果这些子串不在队列中，将其放入到队列
+// 还有满足条件的子串，返回true；没有，返回false
+bool get_child_str_of_x(string s, int x_idx)
 {
-    if (x == UNVISITABLE || y == UNVISITABLE) {
-        return 0;
+    int times = times_map[s];
+    int x, y;
+    decode_num(x_idx, &x, &y);
+    for (int i = 0; i < 4; i++) {
+        int child_x = x + child_offset_x[i];
+        int child_y = y + child_offset_y[i];
+        if (child_x >= 0 && child_x <= 2 && child_y >= 0 && child_y <= 2) {
+            int child_idx = code_num(child_x, child_y);
+            string child_str = swap_get_child_str(s, x_idx, child_idx);
+            if (unvisited(child_str)) {
+                a.push(child_str);
+                times_map[child_str] = times++;
+                if (child_str == "12345678x") {
+                    // cout << times_map[child_str];
+                    return true;
+                }
+            }
+        }
     }
-    int times = 0;
-    int parent_x = x;
-    int parent_y = y;
-    while (parent_x != 1 || parent_y != 1) {
-        decode_num(parent[x][y], &parent_x, &parent_y);
-        x = parent_x;
-        y = parent_y;
-        times++;
-    }
-    return times;
+    return false;
 }
 
-int bfs(int x, int y)
+int get_x_idx(string s)
 {
-    a[x][y] = VISITED;
-    int child_x = UNVISITABLE, child_y = UNVISITABLE;
-    make_visitable_child_in_queue(x, y);
-    while (!q.empty() && (visit_queue(&child_x, &child_y), child_x != dest_x || child_y != dest_y)) {
-        make_visitable_child_in_queue(child_x, child_y);
+    int i = 0;
+    while (s[i] != 'x') {
+        i++;
     }
-    return reverse_travel(child_x, child_y);
+    return i;
 }
 
 int main(int argc, char *argv[])
 {
-    cin >> n >> m;
-    dest_x = n;
-    dest_y = m;
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= m; j++) {
-            cin >> a[i][j];
+    string str;
+    char c;
+    int current_x_idx;
+    for (int i = 0; i < 9; i++) {
+        cin >> c;
+        str += c;
+        if (c == 'x') {
+            current_x_idx = i;
         }
     }
+    cout << str;
+    a.push(str);
+    times_map[str] = 0;
 
-    int current_x = 1;
-    int current_y = 1;
-    int times = bfs(current_x, current_y);
-    cout << times << endl;
+    while (!a.empty()) {
+        string s = a.front();
+        a.pop();
+        current_x_idx = get_x_idx(s);
+        // 拿到当前x所在位置的所有孩子子串
+        if (get_child_str_of_x(s, current_x_idx)) {
+            break;
+        }
+    }
 
     return 0;
 }
