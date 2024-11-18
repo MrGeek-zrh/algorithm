@@ -1,21 +1,22 @@
 // 树的重心
 #include <iostream>
+#include <map>
 
 using namespace std;
 
 const int N = 100010;
 enum { UNVISITABLE = 0, VISITABLE = 1, VISITED };
-int status[N] = { UNVISITABLE };
-int val[N] = { 0 };
-int ne[N] = { -1 };
+int status[2 * N] = { UNVISITABLE };
+int val[2 * N] = { 0 };
+int ne[2 * N] = { -1 };
 // 存储的是ne的下标
 int head[N] = { 0 };
 int tail[N] = { 0 };
 
-int max_cnt = 9;
+int max_cnt = N;
 int gravity = UNVISITABLE;
 
-int cnt_arr[N] = { 0 };
+int cnt_arr[2 * N] = { 0 };
 
 int n;
 
@@ -36,7 +37,10 @@ bool get_child(int root, int *child)
     while (idx != -1) {
         if (status[idx] == VISITABLE) {
             *child = val[idx];
-            status[*child] = VISITED;
+            status[idx] = VISITED;
+            // 如果是奇数下标，反向边是idx+1；如果是偶数下标，反向边是idx-1
+            int reverse_idx = (idx % 2 == 1) ? idx + 1 : idx - 1;
+            status[reverse_idx] = VISITED;
             return true;
         }
         idx = ne[idx];
@@ -52,7 +56,6 @@ int get_max()
 
 int dfs(int root)
 {
-    gravity = root;
     int child_max_cnt = 0;
     int inner_max_cnt = 0;
     if (is_leaf(root)) {
@@ -83,23 +86,23 @@ void print()
     }
 }
 
-int current_idx = 0;
-void insert(int parent, int child)
+int current_idx = 1;
+void insert(int x, int y)
 {
-    int h = head[parent];
-    int t = tail[parent];
+    int h = head[x];
+    int t = tail[x];
 
     status[current_idx] = VISITABLE;
-    val[current_idx] = child;
+    val[current_idx] = y;
 
     if (h == 0) {
-        head[parent] = current_idx;
-        tail[parent] = current_idx;
-        ne[tail[parent]] = -1;
+        head[x] = current_idx;
+        tail[x] = current_idx;
+        ne[tail[x]] = -1;
     } else {
         ne[t] = current_idx;
         ne[current_idx] = -1;
-        tail[parent] = current_idx;
+        tail[x] = current_idx;
     }
     current_idx++;
 }
@@ -107,16 +110,17 @@ void insert(int parent, int child)
 int main(int argc, char *argv[])
 {
     cin >> n;
-    int parent, child;
+    int x, y;
     tail[1] = 1;
     for (int i = 1; i < n; i++) {
-        cin >> parent >> child;
-        insert(parent, child);
+        cin >> x >> y;
+        insert(x, y);
+        insert(y, x);
     }
 
+    gravity = 1;
     dfs(1);
-
-    print();
+    // print();
 
     int max = get_max();
     cout << max;
