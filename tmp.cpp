@@ -1,100 +1,125 @@
+// 树的重心
 #include <iostream>
-#include <queue>
-#include <string>
-#include <map>
 
 using namespace std;
 
-queue<string> a;
-map<string, int> times_map;
+const int N = 100010;
+enum { UNVISITABLE = 0, VISITABLE = 1, VISITED };
+int status[N] = { UNVISITABLE };
+int val[N] = { 0 };
+int ne[N] = { -1 };
+// 存储的是ne的下标
+int head[N] = { 0 };
+int tail[N] = { 0 };
 
-int child_offset_x[4] = { -1, 1, 0, 0 };
-int child_offset_y[4] = { 0, 0, -1, 1 };
+int max_cnt = 9;
+int gravity = UNVISITABLE;
 
-int code_num(int x, int y)
+int cnt_arr[N] = { 0 };
+
+int n;
+
+bool is_leaf(int root)
 {
-    return 3 * x + y;
+    int h = head[root];
+    if (h == 0) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void decode_num(int num, int *x, int *y)
+bool get_child(int root, int *child)
 {
-    *x = num / 3;
-    *y = num % 3;
-}
-
-string swap_get_child_str(string s, int x_idx, int child_idx)
-{
-    char tmp = s[x_idx];
-    s[x_idx] = s[child_idx];
-    s[child_idx] = tmp;
-    return s;
-}
-
-// str没在map中作为key出现过
-bool unvisited(string str)
-{
-    return times_map.count(str) == 0;
-}
-
-// 获取到当前x所在位置的所有子串，如果这些子串不在队列中，将其放入到队列
-// 还有满足条件的子串，返回true；没有，返回false
-bool get_child_str_of_x(string s, int x_idx)
-{
-    int times = times_map[s];
-    int x, y;
-    decode_num(x_idx, &x, &y);
-    for (int i = 0; i < 4; i++) {
-        int child_x = x + child_offset_x[i];
-        int child_y = y + child_offset_y[i];
-        if (child_x >= 0 && child_x <= 2 && child_y >= 0 && child_y <= 2) {
-            int child_idx = code_num(child_x, child_y);
-            string child_str = swap_get_child_str(s, x_idx, child_idx);
-            if (unvisited(child_str)) {
-                a.push(child_str);
-                times_map[child_str] = times + 1;
-                if (child_str == "12345678x") {
-                    cout << times_map[child_str];
-                    return true;
-                }
-            }
+    int h = head[root];
+    int idx = h;
+    while (idx != -1) {
+        if (status[idx] == VISITABLE) {
+            *child = val[idx];
+            status[*child] = VISITED;
+            return true;
         }
+        idx = ne[idx];
     }
     return false;
 }
 
-int get_x_idx(string s)
+// 所有最大值中的最小值
+int get_max()
 {
-    int i = 0;
-    while (s[i] != 'x') {
-        i++;
+    return max_cnt;
+}
+
+int dfs(int root)
+{
+    gravity = root;
+    int child_max_cnt = 0;
+    int inner_max_cnt = 0;
+    if (is_leaf(root)) {
+        cnt_arr[root] = 1;
+        return 1;
     }
-    return i;
+    int child;
+    while (get_child(root, &child)) {
+        int child_cnt = dfs(child);
+        cnt_arr[root] += child_cnt;
+        child_max_cnt = child_max_cnt > child_cnt ? child_max_cnt : child_cnt;
+    }
+    // 加上自己
+    cnt_arr[root] += 1;
+    int left_cnt = n - cnt_arr[root];
+    inner_max_cnt = left_cnt > child_max_cnt ? left_cnt : child_max_cnt;
+
+    max_cnt = max_cnt < inner_max_cnt ? max_cnt : inner_max_cnt;
+
+    gravity = max_cnt < inner_max_cnt ? gravity : root;
+    return cnt_arr[root];
+}
+
+void print()
+{
+    for (int i = 1; i <= n; i++) {
+        cout << "cnt arr:" << cnt_arr[i] << endl;
+    }
+}
+
+int current_idx = 0;
+void insert(int parent, int child)
+{
+    int h = head[parent];
+    int t = tail[parent];
+
+    status[current_idx] = VISITABLE;
+    val[current_idx] = child;
+
+    if (h == 0) {
+        head[parent] = current_idx;
+        tail[parent] = current_idx;
+        ne[tail[parent]] = -1;
+    } else {
+        ne[t] = current_idx;
+        ne[current_idx] = -1;
+        tail[parent] = current_idx;
+    }
+    current_idx++;
 }
 
 int main(int argc, char *argv[])
 {
-    string str;
-    char c;
-    int current_x_idx;
-    for (int i = 0; i < 9; i++) {
-        cin >> c;
-        str += c;
-        if (c == 'x') {
-            current_x_idx = i;
-        }
+    cin >> n;
+    int parent, child;
+    tail[1] = 1;
+    for (int i = 1; i < n; i++) {
+        cin >> parent >> child;
+        insert(parent, child);
     }
-    a.push(str);
-    times_map[str] = 0;
 
-    while (!a.empty()) {
-        string s = a.front();
-        a.pop();
-        current_x_idx = get_x_idx(s);
-        // 拿到当前x所在位置的所有孩子子串
-        if (get_child_str_of_x(s, current_x_idx)) {
-            break;
-        }
-    }
+    dfs(1);
+
+    print();
+
+    int max = get_max();
+    cout << max;
 
     return 0;
 }
