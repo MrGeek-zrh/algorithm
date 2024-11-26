@@ -113,7 +113,7 @@ void make_child_in_queue(int root)
     }
 }
 
-void bfs(int root)
+void dfs(int root)
 {
     make_child_in_queue(root);
     while (!child_num.empty()) {
@@ -148,6 +148,6 @@ int main()
     }
 
     dis[1] = 0;
-    bfs(1);
+    dfs(1);
     return 0;
 }

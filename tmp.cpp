@@ -1,153 +1,172 @@
-// 847. 图中点的层次
-#include <cstddef>
+#include <algorithm>
+#include <cstdio>
+#include <exception>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
 
 using namespace std;
 
-const int N = 100010;
-
-// 是不是找到了结果
-bool flag = false;
-
-enum { UNVISITABLE = 0, VISITABLE, VISITED };
-
-int status[N] = { UNVISITABLE };
-// 下标是idx，值是节点的编号
-int val[N];
-int ne[N] = { -1 };
-// 存储的是val的下标
-int head[N] = { -1 };
-int tail[N] = { -1 };
-
-int dest;
-
-// 相邻结点的编号都放这里
-queue<int> child_num;
-
-// 1到每个点的距离记录下来
-int dis[N] = { 0 };
-
-map<string, int> kv_times;
-
 // #define debug
 
-int current_idx = 1;
-void insert(int x, int y)
+const int N = 100010;
+
+int n;
+
+enum { UNVISITABLE = 0, VISITABLE, VISITED, REMOVED };
+int val[N];
+int ne[N];
+int head[N];
+int tail[N];
+int status[N] = { 0 };
+// 节点i的父亲的数量，每当减少一个父亲，parent_cnt[i]--;
+// 下标是val
+int parent_cnt[N] = { 0 };
+
+int print_status[N] = { 0 };
+
+int arr[N];
+int print_cnt = 0;
+void add_to_arr(int node)
 {
-    // 自环
-    if (x == y) {
-        return;
-    }
-    val[current_idx] = y;
-    status[current_idx] = VISITABLE;
-    if (head[x] == 0) {
-        head[x] = current_idx;
-        tail[x] = current_idx;
-        ne[tail[x]] = -1;
-    } else {
-        ne[tail[x]] = current_idx;
-        ne[current_idx] = -1;
-        tail[x] = current_idx;
-    }
-    current_idx++;
+    arr[print_cnt] = node;
+    print_cnt++;
 }
 
-int get_node()
+void print()
 {
-    int child = child_num.front();
-    child_num.pop();
-    return child;
+    for (int i = 0; i < print_cnt; i++) {
+        cout << arr[i] << " ";
+    }
+}
+
+bool has_no_child(int root)
+{
+    return head[root] == 0;
 }
 
 bool get_child(int *last_visited_idx, int root, int *child)
 {
-    int tmp = *last_visited_idx;
-    while (tmp != -1) {
-        if (status[tmp] == VISITABLE) {
-            *child = val[tmp];
-            status[tmp] = VISITED;
-            *last_visited_idx = ne[tmp];
+    int idx = *last_visited_idx;
+    while (idx != -1) {
+        if (status[idx] == VISITABLE) {
+            *child = val[idx];
+            status[idx] = VISITED;
+            *last_visited_idx = ne[idx];
             return true;
         }
-        tmp = ne[tmp];
+        idx = ne[idx];
     }
     return false;
 }
 
-bool has_existed(int x)
+// 将root的所有孩子节点的parent_cnt都--，不论其状态
+void dec_all_child_parent_cnt(int root)
 {
-    return dis[x] != 0;
+    int h = head[root];
+    int idx = h;
+    while (idx != -1) {
+        parent_cnt[val[idx]]--;
+        idx = ne[idx];
+    }
 }
 
-// 将孩子节点都放到队列中，并且要设置status为VISITED
-// 还需要维护节点的dis数组
-void make_child_in_queue(int root)
+void dfs(int root)
 {
-    int child;
-    int last_visited_idx = head[root];
+    if (has_no_child(root)) {
+        return;
+    }
+    int child, last_visited_idx;
+    last_visited_idx = head[root];
+    dec_all_child_parent_cnt(root);
     while (get_child(&last_visited_idx, root, &child)) {
-        child_num.push(child);
-        // BUG:
-        if (has_existed(child)) {
-            dis[child] = dis[child] > dis[root] + 1 ? dis[root] + 1 : dis[child];
-        } else {
-            dis[child] = dis[root] + 1;
-        }
-
 #ifdef debug
-        cout << "root:" << root << " child:" << child << " dis:" << dis[child] << endl;
-        cout << endl;
+        printf("before=====parent:%d child:%d parent_cnt:%d\n", root, child, parent_cnt[child]);
+#endif
+#ifdef debug
+        printf("after======parent:%d child:%d parent_cnt:%d\n", root, child, parent_cnt[child]);
+        print();
+        printf("\n");
 #endif
 
-        if (child == dest) {
-            flag = true;
-            cout << dis[child];
-            return;
+        if (parent_cnt[child] <= 0 && print_status[child] == 0) {
+            print_status[child] = 1;
+            status[child] = REMOVED;
+            add_to_arr(child);
+            dfs(child);
         }
     }
 }
 
-void bfs(int root)
+int current_idx = 1;
+void insert(int parent, int child)
 {
-    make_child_in_queue(root);
-    while (!child_num.empty()) {
-        int child = get_node();
-        make_child_in_queue(child);
-        if (flag) {
-            return;
+    val[current_idx] = child;
+    status[current_idx] = VISITABLE;
+    if (head[parent] == 0) {
+        head[parent] = current_idx;
+        tail[parent] = current_idx;
+        ne[tail[parent]] = -1;
+    } else {
+        ne[tail[parent]] = current_idx;
+        tail[parent] = current_idx;
+        ne[current_idx] = -1;
+    }
+    current_idx++;
+}
+
+void inc_parent_cnt(int child)
+{
+    parent_cnt[child]++;
+}
+
+// 所有入度为0，并且没被访问过的
+int find_no_parent_node(int *root, int *last_visited_node)
+{
+    for (int i = *last_visited_node; i <= n; i++) {
+        if (parent_cnt[i] == 0 && print_status[i] == 0) {
+            *last_visited_node = i + 1;
+            *root = i;
+            return 0;
         }
     }
-    cout << -1;
+    return -1;
 }
+
+map<string, int> kv_times;
 
 int main()
 {
-    int n, m;
+    int m;
     cin >> n >> m;
-    dest = n;
-    if (n == 1) {
-        cout << 0;
-        return 0;
-    }
-    int x, y;
     string s;
     for (int i = 1; i <= m; i++) {
-        cin >> x >> y;
-        s = to_string(x) + to_string(y);
+        int parent, child;
+        cin >> parent >> child;
+        if (parent == child) {
+            cout << -1;
+            return 0;
+        }
+
+        s = to_string(parent) + to_string(child);
         if (kv_times.count(s) == 0) {
-            // 去除重边
             kv_times[s] = 1;
-            insert(x, y);
+            inc_parent_cnt(child);
+            insert(parent, child);
         }
     }
 
-    dis[1] = 0;
-    bfs(1);
+    int root;
+    int start = 1;
+    while (find_no_parent_node(&root, &start) != -1) {
+        add_to_arr(root);
+        dfs(root);
+    }
+    if (print_cnt == n) {
+        print();
+    } else {
+        cout << -1;
+    }
     return 0;
 }
