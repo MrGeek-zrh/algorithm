@@ -19,10 +19,8 @@ int main()
     }
     for (int i = 1; i <= n; i++) {
         for (int j = 0; j <= m; j++) {
-            if (v[i] > j) {
-                f[i][j] = f[i - 1][j];
-            } else {
-                f[i][j] = max(f[i - 1][j], f[i][j - v[i]] + w[i]);
+            for (int k = 0; k <= s[i] && k * v[i] <= j; k++) {
+                f[i][j] = max(f[i][j], f[i - 1][j - k * v[i]] + k * w[i]);
             }
         }
     }
