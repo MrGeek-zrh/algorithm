@@ -1,31 +1,36 @@
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
+#include <ostream>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-const int N = 1010;
-int n;
-
-int a[N];
-int f[N];
+const int N = 100010;
+struct range {
+    int x, y;
+    bool operator<(const range &r)
+    {
+        return y < r.y;
+    }
+} range[N];
 
 int main()
 {
+    int n;
     cin >> n;
-    for (int i = 1; i <= n; i++) {
-        cin >> a[i];
-        f[i] = 1;
+    for (int i = 0; i < n; i++) {
+        cin >> range[i].x >> range[i].y;
     }
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j < i; j++) {
-            if (a[j] < a[i]) {
-                f[i] = max(f[i], f[j] + 1);
-            }
+    sort(range, range + N);
+    int end = -1e9 - 10;
+    int res = 0;
+    for (int i = 0; i < n; i++) {
+        if (end < range[i].x) {
+            res++;
+            end = range[i].y;
         }
-    }
-    int res = -1e9;
-    for (int i = 1; i <= n; i++) {
-        res = max(res, f[i]);
     }
     cout << res;
     return 0;
