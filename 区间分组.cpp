@@ -18,24 +18,26 @@ struct range {
     {
         return l < w.l;
     }
-} ranges[N];
+} range[N];
 
 int main()
 {
     int n;
     cin >> n;
     for (int i = 0; i < n; i++) {
-        cin >> ranges[i].l >> ranges[i].r;
+        cin >> range[i].l >> range[i].r;
     }
-    sort(ranges, ranges + n);
+    sort(range, range + n);
     priority_queue<int, vector<int>, greater<int>> heap;
     for (int i = 0; i < n; i++) {
-        if (heap.empty() || heap.top() >= ranges[i].l) {
-            heap.push(ranges[i].r);
+        // 和最小右端点都相交，和其它组肯定也相交
+        // 放到新组里
+        if (heap.empty() || heap.top() >= range[i].l) {
+            heap.push(range[i].r);
         } else {
-            // 最小的右端点都不和这个区间的左端点相交，随机选择一个组放进去就行了。这里就直接选择最小右端点所在的组了。
+            // 和最小的右端点不相交，直接加入到最小右端点
             heap.pop();
-            heap.push(ranges[i].r);
+            heap.push(range[i].r);
         }
     }
     cout << heap.size();
