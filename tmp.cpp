@@ -8,6 +8,7 @@
 using namespace std;
 
 const int N = 500100;
+
 typedef pair<int, int> PII;
 
 int n;
@@ -16,22 +17,28 @@ PII a[N];
 int main()
 {
     cin >> n;
+
     for (int i = 0; i < n; i++) {
-        int w, s;
-        cin >> w >> s;
-        a[i] = { w + s, w };
+        int l, r;
+        cin >> l >> r;
+        a[i] = { l, r };
     }
+
     sort(a, a + n);
 
-    // 这里要定义的足够小
-    int res = -1e9;
-    // sum 存储重量之和
-    for (int i = 0, sum = 0; i < n; i++) {
-        int w = a[i].second;
-        int s = a[i].first - w;
-        res = max(res, sum - s);
-        sum += w;
+    int right = a[0].first;
+    int res = 0;
+    for (int i = 0; i < n; i++) {
+        if (right >= a[i].first) {
+            // 相交，更新right
+            right = max(right, a[i].second);
+        } else {
+            // 不想交，直接更新right
+            res++;
+            right = a[i].second;
+        }
     }
-    cout << res;
+    cout << res + 1;
+
     return 0;
 }

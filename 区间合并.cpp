@@ -1,49 +1,45 @@
+#include <cstdlib>
 #include <iostream>
 #include <algorithm>
+#include <pthread.h>
+#include <string>
+#include <utility>
 
 using namespace std;
 
-const int N = 100100;
+const int N = 500100;
+
+typedef pair<int, int> PII;
 
 int n;
-struct range {
-    int l, r;
-    bool operator<(const range &w)
-    {
-        return l < w.l;
-    }
-} ranges[N];
-
-int rights[N];
+PII a[N];
 
 int main()
 {
     cin >> n;
 
     for (int i = 0; i < n; i++) {
-        cin >> ranges[i].l >> ranges[i].r;
+        int l, r;
+        cin >> l >> r;
+        a[i] = { l, r };
     }
-    sort(ranges, ranges + n);
 
-    int right_idx = 0;
-    int right = ranges[0].l;
+    sort(a, a + n);
+
+    int right = a[0].first;
+    int res = 0;
     for (int i = 0; i < n; i++) {
-        if (ranges[i].l <= right) {
-            // 相交
-            // 进行合并，并更新右端点
-            right = max(ranges[i].r, right);
-            rights[right_idx] = right;
+        if (right >= a[i].first) {
+            // 相交，更新right
+            right = max(right, a[i].second);
         } else {
-            // 不可以合并a
-            // 区间添加到 rights，作为新区间
-            right = ranges[i].r;
-            right_idx++;
-            rights[right_idx] = right;
+            // 不想交，直接更新right
+            res++;
+            right = a[i].second;
         }
     }
-
-    // 注意，这里是right idx+1
-    cout << right_idx + 1;
+    // 注意，是res+1
+    cout << res + 1;
 
     return 0;
 }
