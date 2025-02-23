@@ -23,6 +23,7 @@ int main()
 
     sort(b, b + idx);
 
+    // 是排序以后才进行遍历的，这点很重要！！！！
     int res = 1, t = 0;
     for (int i = 0; i < idx; i++) {
         if (b[i] % 2 == 0)
