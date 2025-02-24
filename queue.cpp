@@ -1,71 +1,41 @@
-// 数组模拟队列
-#include <cstdio>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
-#include <map>
+#include <algorithm>
+#include <pthread.h>
+#include <queue>
 #include <string>
+#include <utility>
+#include <vector>
+#include <stack>
+#include <unordered_map>
 
 using namespace std;
 
-const int N = 100010;
+const int N = 100100;
 
-int a[N] = { 0 };
-
-map<string, int> op_map = { { "push", 1 }, { "pop", 2 }, { "empty", 3 }, { "query", 4 } };
-
-int tail_idx = 0;
-int top_idx = 0;
-
-void push(int x)
-{
-    a[tail_idx] = x;
-    tail_idx++;
-}
-
-void pop()
-{
-    a[top_idx] = 0;
-    top_idx++;
-}
-
-bool empty()
-{
-    return top_idx >= tail_idx;
-}
-
-int query()
-{
-    return a[top_idx];
-}
+int n;
+int a[N], hh, tt = -1;
 
 int main()
 {
-    int m = 0;
-    cin >> m;
-    string op;
+    cin >> n;
+    string str;
     int x;
-    for (int i = 0; i < m; i++) {
-        cin >> op;
-        switch (op_map[op]) {
-            case 1:
-                cin >> x;
-                push(x);
-                break;
-            case 2:
-                pop();
-                break;
-
-            case 3:
-                if (empty()) {
-                    printf("YES\n");
-                } else {
-                    printf("NO\n");
-                }
-                break;
-            case 4:
-                cout << query() << endl;
-                break;
-            default:
-                break;
+    while (n--) {
+        cin >> str;
+        if (str == "push") {
+            cin >> x;
+            tt++;
+            a[tt] = x;
+        } else if (str == "pop") {
+            hh++;
+        } else if (str == "empty") {
+            cout << (hh <= tt ? "NO" : "YES") << endl;
+        } else {
+            cout << a[hh] << endl;
         }
     }
     return 0;
