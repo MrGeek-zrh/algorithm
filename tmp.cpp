@@ -17,46 +17,39 @@
 
 using namespace std;
 
-const int N = 100010;
+const int N = 1e6 + 10;
 const int M = 1000100;
 
+pair<int, int> a[N];
 int n, m;
-int cnt;
-
-int a[N];
-
-// 堆的数量是变化的，需要使用cnt判断，而不是n
-void down(int x)
-{
-    int t = x;
-    if (2 * x <= cnt && a[t] > a[2 * x]) {
-        t = 2 * x;
-    }
-    if (2 * x + 1 <= cnt && a[t] > a[2 * x + 1]) {
-        t = 2 * x + 1;
-    }
-    if (x != t) {
-        swap(a[t], a[x]);
-        down(t);
-    }
-}
 
 int main()
 {
-    cin >> n >> m;
-    for (int i = 1; i <= n; i++) {
-        cin >> a[i];
+    int s, t;
+    cin >> s >> t;
+    cin >> n;
+    int l, r;
+    for (int i = 0; i < n; i++) {
+        cin >> l >> r;
+        a[i] = { l, r };
     }
-    cnt = n;
-    for (int i = n / 2; i > 0; i--) {
-        down(i);
-    }
+    sort(a, a + n);
 
-    for (int i = 1; i <= m; i++) {
-        cout << a[1] << " ";
-        a[1] = a[cnt];
-        cnt--;
-        down(1);
+    int right = -1e9 - 10;
+    for (int i = 0; i < n; i++) {
+        int j = i;
+        while (j < n && a[j].first <= s) {
+            right = max(right, a[j].second);
+            j++;
+        }
+        if (j == n) {
+            cout << -1;
+            return 0;
+        }
+        if (right < s) {
+            cout << -1;
+            return 0;
+        }
     }
 
     return 0;
