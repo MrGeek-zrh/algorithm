@@ -1,49 +1,56 @@
-#include <cstdio>
+#include <cctype>
+#include <charconv>
 #include <cmath>
+#include <codecvt>
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
+#include <iostream>
+#include <algorithm>
+#include <iterator>
+#include <pthread.h>
+#include <queue>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stack>
+#include <unordered_map>
+#include <cstring>
 
 using namespace std;
 
-const int N = 100010;
-char a[N] = { '\0' };
-
 const int P = 131;
+const int N = 100003;
+const int M = 1000100;
 
-unsigned long long ha[N] = { 0 };
+int n, m;
 
-// 求字符串的所有前缀的hash值，结果放在ha数组中
-void get_prefix_hash(int n)
+typedef unsigned long long ULL;
+
+char a[N];
+// 定义为无符号64位数，这样相当于自动mod64
+ULL h[N];
+// 记录第i个数的权重,方便后面确定子区间移动的位数
+ULL p[N];
+
+int main()
 {
+    cin >> n >> m;
+    // 这个初始化很重要
+    p[0] = 1;
     for (int i = 1; i <= n; i++) {
-        // TODO:
-        // FIXME:
-        // 通过debug，发现这里i不是++，而是i += 2，为啥？没搞懂
-        ha[i] = ha[i - 1] * P + a[i];
+        cin >> a[i];
+        // 1~i的hash值就是 1~i-1的hash值左移一位，在加上第i位的数值
+        h[i] = h[i - 1] * P + a[i];
+        p[i] = p[i - 1] * P;
     }
-}
-
-// a b c d
-unsigned long long h(int l, int r)
-{
-    return ha[r] - (unsigned long long)(ha[l - 1] * (unsigned long long)pow(P, r - l + 1));
-}
-
-bool compare(int l1, int r1, int l2, int r2)
-{
-    return h(l1, r1) == h(l2, r2);
-}
-
-int main(int argc, char *argv[])
-{
-    int n, m;
-    scanf("%d %d\n", &n, &m);
-    for (int i = 1; i <= n; i++) {
-        scanf("%c", &a[i]);
-    }
-    get_prefix_hash(n);
     int l1, r1, l2, r2;
-    for (int i = 0; i < m; i++) {
-        scanf("%d %d %d %d", &l1, &r1, &l2, &r2);
-        printf("%s\n", compare(l1, r1, l2, r2) ? "Yes" : "No");
+    while (m--) {
+        cin >> l1 >> r1 >> l2 >> r2;
+        ULL s1 = h[r1] - h[l1 - 1] * p[r1 - l1 + 1];
+        ULL s2 = h[r2] - h[l2 - 1] * p[r2 - l2 + 1];
+        cout << (s1 == s2 ? "Yes" : "No") << endl;
     }
+
     return 0;
 }
