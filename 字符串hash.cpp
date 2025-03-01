@@ -27,6 +27,8 @@ int n, m;
 
 typedef unsigned long long ULL;
 
+// 字符串hash需要注意的是，第i位是最右边的，而不是最左边的。和正常的二进制中的第i位的概念是相反的
+
 char a[N];
 // 定义为无符号64位数，这样相当于自动mod64
 ULL h[N];
