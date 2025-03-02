@@ -19,27 +19,36 @@
 
 using namespace std;
 
-const int P = 131;
-const int N = 100003;
+const int N = 9;
 const int M = 1000100;
 
 int n, m;
 
 int a[N];
+char p[N][N];
 
-void dfs(int layer, int state)
+// 当前列有没有皇后；当前点的对角线有没有皇后；当前点的反对角线有没有皇后
+int col[N], dg[N], rdg[N];
+
+void dfs(int layer)
 {
     if (layer == n) {
         for (int i = 0; i < n; i++) {
-            cout << a[i] << " ";
+            for (int j = 0; j < n; j++) {
+                cout << p[i][j];
+            }
+            cout << endl;
         }
         cout << endl;
-        return;
     }
+    int x = layer;
     for (int i = 0; i < n; i++) {
-        if (!((state >> i) & 1)) {
-            a[layer] = i + 1;
-            dfs(layer + 1, state + (1 << i));
+        if (col[i] == 0 && dg[i - x + n] == 0 && rdg[i + x] == 0) {
+            p[x][i] = 'Q';
+            col[i] = dg[i - x + n] = rdg[x + i] = 1;
+            dfs(x + 1);
+            p[x][i] = '.';
+            col[i] = dg[i - x + n] = rdg[x + i] = 0;
         }
     }
 }
@@ -47,7 +56,11 @@ void dfs(int layer, int state)
 int main()
 {
     cin >> n;
-
-    dfs(0, 0);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            p[i][j] = '.';
+        }
+    }
+    dfs(0);
     return 0;
 }
