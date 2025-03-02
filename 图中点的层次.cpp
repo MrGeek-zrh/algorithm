@@ -1,153 +1,93 @@
-// 847. 图中点的层次
-#include <cstddef>
+#include <cctype>
+#include <charconv>
+#include <cmath>
+#include <codecvt>
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
-#include <map>
+#include <algorithm>
+#include <iterator>
+#include <pthread.h>
 #include <queue>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <stack>
+#include <unordered_map>
+#include <cstring>
 
 using namespace std;
 
 const int N = 100010;
+const int M = 2 * N;
 
-// 是不是找到了结果
-bool flag = false;
+int n, m;
 
-enum { UNVISITABLE = 0, VISITABLE, VISITED };
+// 由于是无向边，直接都插入进入吧
+int h[N], e[M], ne[M], idx;
 
-int status[N] = { UNVISITABLE };
-// 下标是idx，值是节点的编号
-int val[N];
-int ne[N] = { -1 };
-// 存储的是val的下标
-int head[N] = { -1 };
-int tail[N] = { -1 };
+// res要初始化为最大的数
+int res = N;
 
-int dest;
+bool state[N];
 
-// 相邻结点的编号都放这里
-queue<int> child_num;
-
-// 1到每个点的距离记录下来
-int dis[N] = { 0 };
-
-map<string, int> kv_times;
-
-// #define debug
-
-int current_idx = 1;
-void insert(int x, int y)
+void insert(int a, int b)
 {
-    // 自环
-    if (x == y) {
-        return;
-    }
-    val[current_idx] = y;
-    status[current_idx] = VISITABLE;
-    if (head[x] == 0) {
-        head[x] = current_idx;
-        tail[x] = current_idx;
-        ne[tail[x]] = -1;
-    } else {
-        ne[tail[x]] = current_idx;
-        ne[current_idx] = -1;
-        tail[x] = current_idx;
-    }
-    current_idx++;
+    int head = h[a];
+    e[idx] = b;
+    ne[idx] = head;
+    h[a] = idx;
+    idx++;
 }
+queue<int> q;
 
-int get_node()
-{
-    int child = child_num.front();
-    child_num.pop();
-    return child;
-}
+int d[N];
 
-bool get_child(int *last_visited_idx, int root, int *child)
+int bfs()
 {
-    int tmp = *last_visited_idx;
-    while (tmp != -1) {
-        if (status[tmp] == VISITABLE) {
-            *child = val[tmp];
-            status[tmp] = VISITED;
-            *last_visited_idx = ne[tmp];
-            return true;
-        }
-        tmp = ne[tmp];
-    }
-    return false;
-}
+    q.push(1);
+    // 在遍历子节点之前设置自己的状态位true，可以解决掉自环的情况
+    state[1] = true;
+    d[1] = 0;
 
-bool has_existed(int x)
-{
-    return dis[x] != 0;
-}
+    while (q.size()) {
+        int t = q.front();
+        q.pop();
 
-// 将孩子节点都放到队列中，并且要设置status为VISITED
-// 还需要维护节点的dis数组
-void make_child_in_queue(int root)
-{
-    int child;
-    int last_visited_idx = head[root];
-    while (get_child(&last_visited_idx, root, &child)) {
-        child_num.push(child);
-        // BUG:
-        if (has_existed(child)) {
-            dis[child] = dis[child] > dis[root] + 1 ? dis[root] + 1 : dis[child];
-        } else {
-            dis[child] = dis[root] + 1;
+        if (t == n) {
+            return d[t];
         }
 
-#ifdef debug
-        cout << "root:" << root << " child:" << child << " dis:" << dis[child] << endl;
-        cout << endl;
-#endif
-
-        if (child == dest) {
-            flag = true;
-            cout << dis[child];
-            return;
+        for (int i = h[t]; i != -1; i = ne[i]) {
+            if (state[e[i]]) {
+                continue;
+            }
+            d[e[i]] = d[t] + 1;
+            // 将这个节点标记为访问过，就可以解决重边的问题
+            // 因为被访问过的节点，后面不会再被访问了
+            state[e[i]] = true;
+            q.push(e[i]);
         }
     }
-}
-
-void dfs(int root)
-{
-    make_child_in_queue(root);
-    while (!child_num.empty()) {
-        int child = get_node();
-        make_child_in_queue(child);
-        if (flag) {
-            return;
-        }
-    }
-    cout << -1;
+    return -1;
 }
 
 int main()
 {
-    int n, m;
     cin >> n >> m;
-    dest = n;
-    if (n == 1) {
-        cout << 0;
-        return 0;
-    }
-    int x, y;
-    string s;
-    for (int i = 1; i <= m; i++) {
-        cin >> x >> y;
-        s = to_string(x) + to_string(y);
-        if (kv_times.count(s) == 0) {
-            // 去除重边
-            kv_times[s] = 1;
-            insert(x, y);
-        }
+
+    // 别忘了初始化头结点为-1
+    memset(h, -1, sizeof(h));
+    int a, b;
+    for (int i = 0; i < m; i++) {
+        cin >> a >> b;
+        insert(a, b);
     }
 
-    dis[1] = 0;
-    dfs(1);
+    res = bfs();
+    cout << res;
+
     return 0;
 }

@@ -20,51 +20,55 @@
 
 using namespace std;
 
-const int N = 110;
-const int M = 1000100;
+const int N = 100010;
+const int M = 2 * N;
 
 int n, m;
 
-// 按照上 下 左 右 的顺序的坐标偏移量
-int dx[4] = { -1, 1, 0, 0 };
-int dy[4] = { 0, 0, -1, 1 };
+// 由于是无向边，直接都插入进入吧
+int h[N], e[M], ne[M], idx;
 
-unordered_map<string, int> s_cnt;
-queue<string> q;
+// res要初始化为最大的数
+int res = N;
 
-int bfs(string s)
+bool state[N];
+
+void insert(int a, int b)
 {
-    string end = "12345678x";
-    s_cnt[s] = 0;
-    q.push(s);
+    int head = h[a];
+    e[idx] = b;
+    ne[idx] = head;
+    h[a] = idx;
+    idx++;
+}
+queue<int> q;
+
+int d[N];
+
+int bfs()
+{
+    q.push(1);
+    // 在遍历子节点之前设置自己的状态位true，可以解决掉自环的情况
+    state[1] = true;
+    d[1] = 0;
 
     while (q.size()) {
-        string t = q.front();
-        string t_bak = t;
+        int t = q.front();
         q.pop();
 
-        if (t_bak == end) {
-            return s_cnt[t_bak];
+        if (t == n) {
+            return d[t];
         }
 
-        int x_idx = t.find('x');
-        int x_x = x_idx / 3;
-        int x_y = x_idx % 3;
-
-        for (int i = 0; i < 4; i++) {
-            int x = x_x + dx[i];
-            int y = x_y + dy[i];
-            if (x >= 0 && x < 3 && y >= 0 && y < 3) {
-                int ne_idx = x * 3 + y;
-                swap(t_bak[ne_idx], t_bak[x_idx]);
-                // 只有没被访问过的才能被放到队列中
-                if (!s_cnt.count(t_bak)) {
-                    s_cnt[t_bak] = s_cnt[t] + 1;
-                    q.push(t_bak);
-                }
-
-                t_bak = t;
+        for (int i = h[t]; i != -1; i = ne[i]) {
+            if (state[e[i]]) {
+                continue;
             }
+            d[e[i]] = d[t] + 1;
+            // 将这个节点标记为访问过，就可以解决重边的问题
+            // 因为被访问过的节点，后面不会再被访问了
+            state[e[i]] = true;
+            q.push(e[i]);
         }
     }
     return -1;
@@ -72,14 +76,17 @@ int bfs(string s)
 
 int main()
 {
-    string s;
-    char t;
-    for (int i = 0; i < 9; i++) {
-        cin >> t;
-        s += t;
+    cin >> n >> m;
+
+    // 别忘了初始化头结点为-1
+    memset(h, -1, sizeof(h));
+    int a, b;
+    for (int i = 0; i < m; i++) {
+        cin >> a >> b;
+        insert(a, b);
     }
 
-    int res = bfs(s);
+    res = bfs();
     cout << res;
 
     return 0;
