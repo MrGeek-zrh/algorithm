@@ -1,101 +1,86 @@
-// 八数码
+#include <cctype>
+#include <charconv>
+#include <cmath>
+#include <codecvt>
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
+#include <algorithm>
+#include <iterator>
+#include <pthread.h>
 #include <queue>
 #include <string>
-#include <map>
+#include <type_traits>
+#include <utility>
+#include <vector>
+#include <stack>
+#include <unordered_map>
+#include <cstring>
 
 using namespace std;
 
-queue<string> status;
-map<string, int> times_map;
+const int N = 110;
+const int M = 1000100;
 
-int child_offset_x[4] = { -1, 1, 0, 0 };
-int child_offset_y[4] = { 0, 0, -1, 1 };
+int n, m;
 
-int code_num(int x, int y)
+// 按照上 下 左 右 的顺序的坐标偏移量
+int dx[4] = { -1, 1, 0, 0 };
+int dy[4] = { 0, 0, -1, 1 };
+
+unordered_map<string, int> s_cnt;
+queue<string> q;
+
+int bfs(string s)
 {
-    return 3 * x + y;
-}
+    string end = "12345678x";
+    s_cnt[s] = 0;
+    q.push(s);
 
-void decode_num(int num, int *x, int *y)
-{
-    *x = num / 3;
-    *y = num % 3;
-}
+    while (q.size()) {
+        string t = q.front();
+        string t_bak = t;
+        q.pop();
 
-string swap_get_child_str(string s, int x_idx, int child_idx)
-{
-    char tmp = s[x_idx];
-    s[x_idx] = s[child_idx];
-    s[child_idx] = tmp;
-    return s;
-}
+        if (t_bak == end) {
+            return s_cnt[t_bak];
+        }
 
-// str没在map中作为key出现过
-bool unvisited(string str)
-{
-    return times_map.count(str) == 0;
-}
+        int x_idx = t.find('x');
+        int x_x = x_idx / 3;
+        int x_y = x_idx % 3;
 
-// 获取到当前x所在位置的所有子串，如果这些子串不在队列中，将其放入到队列
-// 还有满足条件的子串，返回true；没有，返回false
-bool get_child_str_of_x(string s, int x_idx)
-{
-    int times = times_map[s];
-    int x, y;
-    decode_num(x_idx, &x, &y);
-    for (int i = 0; i < 4; i++) {
-        int child_x = x + child_offset_x[i];
-        int child_y = y + child_offset_y[i];
-        if (child_x >= 0 && child_x <= 2 && child_y >= 0 && child_y <= 2) {
-            int child_idx = code_num(child_x, child_y);
-            string child_str = swap_get_child_str(s, x_idx, child_idx);
-            if (unvisited(child_str)) {
-                status.push(child_str);
-                times_map[child_str] = times + 1;
-                if (child_str == "12345678x") {
-                    cout << times_map[child_str];
-                    return true;
+        for (int i = 0; i < 4; i++) {
+            int x = x_x + dx[i];
+            int y = x_y + dy[i];
+            if (x >= 0 && x < 3 && y >= 0 && y < 3) {
+                int ne_idx = x * 3 + y;
+                swap(t_bak[ne_idx], t_bak[x_idx]);
+                // 只有没被访问过的才能被放到队列中
+                if (!s_cnt.count(t_bak)) {
+                    s_cnt[t_bak] = s_cnt[t] + 1;
+                    q.push(t_bak);
                 }
+
+                t_bak = t;
             }
         }
     }
-    return false;
+    return -1;
 }
 
-int get_x_idx(string s)
+int main()
 {
-    int i = 0;
-    while (s[i] != 'x') {
-        i++;
-    }
-    return i;
-}
-
-int main(int argc, char *argv[])
-{
-    string str;
-    char c;
-    int current_x_idx;
+    string s;
+    char t;
     for (int i = 0; i < 9; i++) {
-        cin >> c;
-        str += c;
-        if (c == 'x') {
-            current_x_idx = i;
-        }
+        cin >> t;
+        s += t;
     }
-    status.push(str);
-    times_map[str] = 0;
 
-    while (!status.empty()) {
-        string s = status.front();
-        status.pop();
-        current_x_idx = get_x_idx(s);
-        // 拿到当前x所在位置的所有孩子子串
-        if (get_child_str_of_x(s, current_x_idx)) {
-            break;
-        }
-    }
+    int res = bfs(s);
+    cout << res;
 
     return 0;
 }
