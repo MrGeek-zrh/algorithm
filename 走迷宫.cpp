@@ -1,124 +1,81 @@
-// 走迷宫
+#include <cctype>
+#include <charconv>
+#include <cmath>
+#include <codecvt>
+#include <cstdio>
+#include <cstdlib>
+#include <functional>
 #include <iostream>
+#include <algorithm>
+#include <iterator>
+#include <pthread.h>
 #include <queue>
+#include <string>
 #include <utility>
+#include <vector>
+#include <stack>
+#include <unordered_map>
+#include <cstring>
 
 using namespace std;
 
 const int N = 110;
-//  存储数据
-int a[N][N];
-// 存储节点的父亲
-int parent[N][N];
-
-int dest_x, dest_y;
-
-queue<pair<int, int>> q;
+const int M = 1000100;
 
 int n, m;
 
-enum { VISITED = -1, VISITABLE, UNVISITABLE };
+// 记录迷宫
+int a[N][N];
 
-int code_num(int x, int y)
+// 所有点到原点的距离，值为-1表示该点未被访问过
+int d[N][N];
+
+typedef pair<int, int> PII;
+
+// 点的坐标：x，y
+queue<PII> q;
+
+// 按照上 下 左 右 的顺序的坐标偏移量
+int dx[4] = { -1, 1, 0, 0 };
+int dy[4] = { 0, 0, -1, 1 };
+
+int bfs()
 {
-    return (x - 1) * m + y;
+    memset(d, -1, sizeof(d));
+    // 将原点先push进去，方便统一操作，而不需要为了原点单独做判断
+    q.push({ 0, 0 });
+    d[0][0] = 0;
+    PII t;
+    int x, y;
+    while (!q.empty()) {
+        t = q.front();
+        q.pop();
+
+        for (int i = 0; i < 4; i++) {
+            x = t.first + dx[i];
+            y = t.second + dy[i];
+            // 坐标未越界；点未被访问过；该点可以走通
+            if (x >= 0 && x < n && y >= 0 && y < m && d[x][y] == -1 && a[x][y] == 0) {
+                d[x][y] = d[t.first][t.second] + 1;
+                q.push({ x, y });
+            }
+        }
+    }
+    // 一旦最短路径被找到，就会被标记为非-1，后续再有路径找到这个点的时候，不会修改这个点了，所以最终d[n-1][m-1]就是最短路径
+    return d[n - 1][m - 1];
 }
-
-void decode_num(int c, int *x, int *y)
-{
-    *x = (c % m == 0) ? c / m : c / m + 1;
-    *y = c - (*x - 1) * m;
-}
-
-void make_visitable_child_in_queue(int x, int y)
-{
-    int child1_x = x - 1;
-    int child1_y = y;
-
-    int child2_x = x + 1;
-    int child2_y = y;
-
-    int child3_x = x;
-    int child3_y = y - 1;
-
-    int child4_x = x;
-    int child4_y = y + 1;
-
-    int num = code_num(x, y);
-
-    // 上下左右的孩子节点
-    if (child1_x >= 1 && child1_y >= 1 && child1_x <= n && child1_y <= m && a[child1_x][child1_y] == VISITABLE) {
-        q.push(make_pair(child1_x, child1_y));
-        parent[child1_x][child1_y] = num;
-        a[child1_x][child1_y] = VISITED;
-    }
-    if (child2_x >= 1 && child2_y >= 1 && child2_x <= n && child2_y <= m && a[child2_x][child2_y] == VISITABLE) {
-        q.push(make_pair(child2_x, child2_y));
-        parent[child2_x][child2_y] = num;
-        a[child2_x][child2_y] = VISITED;
-    }
-    if (child3_x >= 1 && child3_y >= 1 && child3_x <= n && child3_y <= m && a[child3_x][child3_y] == VISITABLE) {
-        q.push(make_pair(child3_x, child3_y));
-        parent[child3_x][child3_y] = num;
-        a[child3_x][child3_y] = VISITED;
-    }
-    if (child4_x >= 1 && child4_y >= 1 && child4_x <= n && child4_y <= m && a[child4_x][child4_y] == VISITABLE) {
-        q.push(make_pair(child4_x, child4_y));
-        parent[child4_x][child4_y] = num;
-        a[child4_x][child4_y] = VISITED;
-    }
-}
-
-void visit_queue(int *x, int *y)
-{
-    *x = q.front().first;
-    *y = q.front().second;
-    q.pop();
-}
-
-int reverse_travel(int x, int y)
-{
-    if (x == UNVISITABLE || y == UNVISITABLE) {
-        return 0;
-    }
-    int times = 0;
-    int parent_x = x;
-    int parent_y = y;
-    while (parent_x != 1 || parent_y != 1) {
-        decode_num(parent[x][y], &parent_x, &parent_y);
-        x = parent_x;
-        y = parent_y;
-        times++;
-    }
-    return times;
-}
-
-int bfs(int x, int y)
-{
-    a[x][y] = VISITED;
-    int child_x = UNVISITABLE, child_y = UNVISITABLE;
-    make_visitable_child_in_queue(x, y);
-    while (!q.empty() && (visit_queue(&child_x, &child_y), child_x != dest_x || child_y != dest_y)) {
-        make_visitable_child_in_queue(child_x, child_y);
-    }
-    return reverse_travel(child_x, child_y);
-}
-
-int main(int argc, char *argv[])
+int main()
 {
     cin >> n >> m;
-    dest_x = n;
-    dest_y = m;
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j <= m; j++) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
             cin >> a[i][j];
         }
     }
 
-    int current_x = 1;
-    int current_y = 1;
-    int times = bfs(current_x, current_y);
-    cout << times << endl;
+    int res = bfs();
+
+    cout << res;
 
     return 0;
 }
