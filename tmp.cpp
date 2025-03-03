@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <bits/stdc++.h>
 #include <cstring>
 #include <iostream>
@@ -5,76 +6,66 @@
 
 using namespace std;
 
-const int N = 100010;
+const int N = 510;
 const int M = 2 * N;
 
 int n, m;
 
-// 由于是无向边，直接都插入进入吧
-int h[N], e[M], ne[M], idx;
+// 各个点到原点1的距离
+int dist[N];
+int state[N];
 
-int in[N];
+// 各个点到其孩子节点的距离
+// 也就是用领结矩阵的方式将图保存了下来
+int g[N][N];
 
-queue<int> q;
-
-int p[N];
-
-void insert(int a, int b)
+int dij(int root)
 {
-    e[idx] = b;
-    ne[idx] = h[a];
-    h[a] = idx;
-    idx++;
-}
-
-bool bfs()
-{
-    for (int i = 1; i <= n; i++) {
-        if (in[i] == 0) {
-            q.push(i);
-        }
-    }
-
-    int cnt = 0;
-
-    while (q.size()) {
-        int t = q.front();
-        q.pop();
-        p[cnt] = t;
-        cnt++;
-
-        for (int i = h[t]; i != -1; i = ne[i]) {
-            in[e[i]]--;
-            if (in[e[i]] == 0) {
-                // 注意，这里放的是值，不是索引
-                q.push(e[i]);
+    dist[root] = 0;
+    // 遍历n次，每次都是选取未被访问过的点中，到原点1的距离最小的点，然后用该点更新其相邻节点到原点的距离
+    for (int i = 0; i < n; i++) {
+        // 找到state为0的点中，dist最小的点
+        int t = -1;
+        // 每次查找都要遍历n个点
+        for (int j = 1; j <= n; j++) {
+            // 判断t==-1，是为了初始化这个查找过程
+            if (state[j] == 0 && (t == -1 || dist[t] > dist[j])) {
+                t = j;
             }
         }
+        // 找到的t就是state为0，且dist最小的点
+        // 设置t的state为1
+        state[t] = 1;
+        // 更新该点相邻节点的dist
+        // 注意，这里是遍历整个图了，所以下标是从1开始了
+        for (int m = 1; m <= n; m++) {
+            dist[m] = min(dist[m], dist[t] + g[t][m]);
+        }
     }
-    return cnt == n;
+    if (dist[n] == 0x3f3f3f3f) {
+        return -1;
+    } else {
+        return dist[n];
+    }
 }
 
 int main()
 {
     cin >> n >> m;
 
-    memset(h, -1, sizeof(h));
+    memset(dist, 0x3f, sizeof(dist));
+    memset(g, 0x3f, sizeof(g));
 
-    int a, b;
+    int x, y, z;
     while (m--) {
-        cin >> a >> b;
-        insert(a, b);
-        in[b]++;
+        cin >> x >> y >> z;
+        // 可能存在重边，所以需要注意下
+        g[x][y] = min(g[x][y], z);
     }
 
-    bool res = bfs();
+    int res = dij(1);
 
-    if (res) {
-        for (int i = 0; i < n; i++) {
-            cout << p[i] << " ";
-        }
-    } else {
-        cout << -1;
-    }
+    cout << res;
+
     return 0;
 }
