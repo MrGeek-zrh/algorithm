@@ -1,22 +1,7 @@
-#include <cctype>
-#include <charconv>
-#include <cmath>
-#include <codecvt>
-#include <cstdio>
-#include <cstdlib>
-#include <functional>
-#include <iostream>
-#include <algorithm>
-#include <iterator>
-#include <pthread.h>
-#include <queue>
-#include <string>
-#include <type_traits>
-#include <utility>
-#include <vector>
-#include <stack>
-#include <unordered_map>
+#include <bits/stdc++.h>
 #include <cstring>
+#include <iostream>
+#include <queue>
 
 using namespace std;
 
@@ -28,66 +13,68 @@ int n, m;
 // 由于是无向边，直接都插入进入吧
 int h[N], e[M], ne[M], idx;
 
-// res要初始化为最大的数
-int res = N;
+int in[N];
 
-bool state[N];
+queue<int> q;
+
+int p[N];
 
 void insert(int a, int b)
 {
-    int head = h[a];
     e[idx] = b;
-    ne[idx] = head;
+    ne[idx] = h[a];
     h[a] = idx;
     idx++;
 }
-queue<int> q;
 
-int d[N];
-
-int bfs()
+bool bfs()
 {
-    q.push(1);
-    // 在遍历子节点之前设置自己的状态位true，可以解决掉自环的情况
-    state[1] = true;
-    d[1] = 0;
+    for (int i = 1; i <= n; i++) {
+        if (in[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    int cnt = 0;
 
     while (q.size()) {
         int t = q.front();
         q.pop();
-
-        if (t == n) {
-            return d[t];
-        }
+        p[cnt] = t;
+        cnt++;
 
         for (int i = h[t]; i != -1; i = ne[i]) {
-            if (state[e[i]]) {
-                continue;
+            in[e[i]]--;
+            if (in[e[i]] == 0) {
+                // 注意，这里放的是值，不是索引
+                q.push(e[i]);
             }
-            d[e[i]] = d[t] + 1;
-            // 将这个节点标记为访问过，就可以解决重边的问题
-            // 因为被访问过的节点，后面不会再被访问了
-            state[e[i]] = true;
-            q.push(e[i]);
         }
     }
-    return -1;
+    return cnt == n;
 }
 
 int main()
 {
     cin >> n >> m;
 
-    // 别忘了初始化头结点为-1
     memset(h, -1, sizeof(h));
+
     int a, b;
-    for (int i = 0; i < m; i++) {
+    while (m--) {
         cin >> a >> b;
         insert(a, b);
+        in[b]++;
     }
 
-    res = bfs();
-    cout << res;
+    bool res = bfs();
 
+    if (res) {
+        for (int i = 0; i < n; i++) {
+            cout << p[i] << " ";
+        }
+    } else {
+        cout << -1;
+    }
     return 0;
 }
