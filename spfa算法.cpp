@@ -1,152 +1,82 @@
 #include <algorithm>
+#include <bits/stdc++.h>
 #include <cstring>
+#include <functional>
 #include <iostream>
-#include <string>
-#include <map>
 #include <queue>
+#include <utility>
+#include <vector>
 
 using namespace std;
 
 const int N = 100010;
 
-int head[N] = { 0 };
-int tail[N] = { 0 };
-int val[N];
-int ne[N];
-int weight[N];
-
-// 当前节点有没有被加入到队列中过
-int state[N] = { 0 };
-
 int n, m;
+int k;
 
-// 边：权重
-map<string, int> arc_w;
-
+// 各个点到原点1的距离
 int dist[N];
 
-int current_idx = 1;
-void insert(int x, int y, int w)
-{
-    val[current_idx] = y;
-    ne[current_idx] = -1;
-    weight[current_idx] = w;
+int e[N], ne[N], idx, h[N];
+int w[N];
 
-    if (head[x] == 0) {
-        head[x] = current_idx;
-        tail[x] = current_idx;
-    } else {
-        ne[tail[x]] = current_idx;
-        tail[x] = current_idx;
-    }
-    current_idx++;
-}
+int state[N];
 
-// 更新邻接表的权重
-void update_w(int x, int y, int w)
+void insert(int x, int y, int z)
 {
-    int h = head[x];
-    if (h == 0) {
-        return;
-    }
-    int tmp = h;
-    while (tmp != -1) {
-        if (val[tmp] == y) {
-            weight[tmp] = w;
-            return;
-        }
-        tmp = ne[tmp];
-    }
+    e[idx] = y;
+    ne[idx] = h[x];
+    h[x] = idx;
+    w[idx] = z;
+    idx++;
 }
 
 queue<int> q;
-
-void add_to_q(int node)
+int spfa(int root)
 {
-    q.push(node);
-}
+    dist[root] = 0;
+    q.push(root);
+    state[root] = 1;
 
-int get_front()
-{
-    int node = q.front();
-    q.pop();
-    return node;
-}
+    while (q.size()) {
+        int t = q.front();
+        q.pop();
 
-void update_childs(int parent)
-{
-    int h = head[parent];
-    if (h == 0) {
-        return;
-    }
-    int tmp = h;
-    while (tmp != -1) {
-        int old_dist = dist[val[tmp]];
-        dist[val[tmp]] = min(old_dist, dist[parent] + weight[tmp]);
-        if (dist[val[tmp]] != old_dist) {
-            if (state[val[tmp]] == 0) {
-                add_to_q(val[tmp]);
-                state[val[tmp]] = 1;
+        state[t] = 0;
+
+        for (int i = h[t]; i != -1; i = ne[i]) {
+            // 只有距离需要被更新的时候，并且不在队列中的时候，才将点入队。
+            if (dist[e[i]] > dist[t] + w[i]) {
+                dist[e[i]] = dist[t] + w[i];
+                if (state[e[i]] == 0) {
+                    state[e[i]] = 1;
+                    q.push(e[i]);
+                }
             }
         }
-        tmp = ne[tmp];
     }
-}
-
-void spfa(int root)
-{
-    memset(dist, 0x3f, sizeof(dist));
-    dist[root] = 0;
-    state[root] = 1;
-    add_to_q(root);
-    while (!q.empty()) {
-        int parent = get_front();
-        state[parent] = 0;
-        // 使用从队列取出的节点，更新其孩子节点。孩子节点的dist如果被更新了，就将其加入到队列中
-        update_childs(parent);
-    }
+    return dist[n];
 }
 
 int main()
 {
-    cin >> n >> m;
+    scanf("%d%d", &n, &m);
 
-    int x, y, z;
-    string s;
-    for (int i = 1; i <= m; i++) {
-        cin >> x >> y >> z;
-        // 处理自环
-        if (x == y) {
-            if (n == 1) {
-                cout << 0;
-                return 0;
-            }
-            continue;
-        }
-        // 处理重边
-        s = to_string(x) + "," + to_string(y);
-        if (arc_w.count(s) == 0) {
-            // 不是重边
-            arc_w[s] = z;
-            insert(x, y, z);
-        } else {
-            // 是重边
-            // 如果新边权重更小，则更新邻接表和arc_w
-            if (z < arc_w[s]) {
-                update_w(x, y, z);
-                arc_w[s] = z;
-            }
-            // 否则保持原来的最小边权重
-        }
+    memset(dist, 0x3f, sizeof(dist));
+    memset(h, -1, sizeof(h));
+
+    while (m--) {
+        int a, b, c;
+        scanf("%d%d%d", &a, &b, &c);
+        insert(a, b, c);
     }
 
-    spfa(1);
+    int t = spfa(1);
 
-    if (dist[n] == 0x3f3f3f3f) {
-        cout << "impossible";
-    } else {
-        cout << dist[n];
-    }
+    if (t == 0x3f3f3f3f)
+        puts("impossible");
+    else
+        printf("%d\n", t);
 
     return 0;
 }
