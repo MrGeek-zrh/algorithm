@@ -1,103 +1,83 @@
 #include <algorithm>
+#include <bits/stdc++.h>
+#include <codecvt>
+#include <cstring>
+#include <functional>
 #include <iostream>
-#include <map>
+#include <queue>
 #include <string>
+#include <utility>
+#include <vector>
 
 using namespace std;
 
-const int N = 100010;
-const int M = 2 * 100000 + 10;
-
-struct edge {
-    int x;
-    int y;
-    int w;
-    bool operator<(const edge &e)
-    {
-        return this->w < e.w;
-    }
-} edge[M];
+const int N = 2 * 100010;
 
 int n, m;
+int k;
 
-int res = 0;
-int total_cnt = 0;
+int p[N];
 
-int parent[N];
+struct edge {
+    int a, b, w;
+    bool operator<(const edge &m)
+    {
+        return w < m.w;
+    }
+} edges[N];
 
 int find(int x)
 {
-    int p = x;
-    int t;
-    while (parent[p] != p) {
-        t = p;
-        p = parent[p];
-        parent[t] = parent[p];
+    if (x != p[x]) {
+        p[x] = find(p[x]);
     }
-    return p;
+    return p[x];
 }
 
-bool all_in_same_set(int x, int y)
+int kruskal()
 {
-    int p_x = find(x);
-    int p_y = find(y);
-    return (p_x == p_y);
-}
-
-// y加到x集合
-void uni(int root, int y)
-{
-    int p_y = find(y);
-    parent[p_y] = root;
-}
-
-void kruskal(int mgt_root)
-{
-    int x, y, w;
-    string s;
-
-    for (int i = 1; i <= m; i++) {
-        x = edge[i].x;
-        y = edge[i].y;
-        w = edge[i].w;
-
-        if (all_in_same_set(x, y)) {
-            continue;
-        } else {
-            uni(mgt_root, x);
-            uni(mgt_root, y);
-            total_cnt++;
+    int cnt = 0;
+    int res = 0;
+    for (int i = 0; i < m; i++) {
+        int a = edges[i].a;
+        int b = edges[i].b;
+        int w = edges[i].w;
+        int pa = find(a);
+        int pb = find(b);
+        // a和b不处于一个集合中，说明a和b至少有一个还没被加入到生成树中，那么将ab这条边加入到集合中就一定不会导致环路，所以就可以直接加入
+        // 反正，ab这条边就不能加入，因为会导致环路
+        if (pa != pb) {
+            p[pa] = pb;
+            cnt++;
             res += w;
         }
+    }
+    if (cnt != n - 1) {
+        return 0x3f3f3f3f;
+    } else {
+        return res;
     }
 }
 
 int main()
 {
     cin >> n >> m;
-    if (n == 1) {
-        cout << 0;
-        return 0;
+    for (int i = 1; i <= n; i++) {
+        p[i] = i;
     }
-    int x, y, w;
-    string s;
-    for (int i = 1; i <= m; i++) {
-        cin >> x >> y >> w;
-        edge[i] = { x, y, w };
+    for (int i = 0; i < m; i++) {
+        int a, b, w;
+        cin >> a >> b >> w;
+        edges[i] = { a, b, w };
     }
 
-    sort(edge + 1, edge + m + 1);
+    sort(edges, edges + m);
 
-    for (int i = 0; i <= n; i++) {
-        parent[i] = i;
-    }
-
-    int mgt_root = 0;
-    kruskal(mgt_root);
-    if (total_cnt < n - 1) {
-        cout << "impossible";
+    int res = kruskal();
+    if (res == 0x3f3f3f3f) {
+        cout << "impossible" << endl;
     } else {
-        cout << res;
+        cout << res << endl;
     }
 
     return 0;
