@@ -1,109 +1,82 @@
 #include <algorithm>
+#include <bits/stdc++.h>
+#include <codecvt>
 #include <cstring>
+#include <functional>
 #include <iostream>
-#include <set>
+#include <queue>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace std;
 
 const int N = 510;
 
-int a[N][N] = { 0 };
 int n, m;
+int k;
 
-// 注意：不是离源点最近的距离，而是离最小生成树最近的距离
 int dist[N];
-// 是否被纳入了最小生成树中
-int state[N] = { 0 };
-// 前驱节点
-int pre[N];
 
-// 未被纳入最小生成树的节点的距离的有序列表
-// dist:node
-set<pair<int, int>> node_unadded;
+int g[N][N];
+int state[N];
 
-void add_to_set(int node, int d)
+int prim()
 {
-    node_unadded.insert(make_pair(d, node));
-}
-
-int get_from_set()
-{
-    pair<int, int> tmp = *node_unadded.begin();
-    int node = tmp.second;
-    node_unadded.erase(tmp);
-    return node;
-}
-
-void update_all_child_node(int node)
-{
-    for (int i = 1; i <= n; i++) {
-        if (i == node) {
-            continue;
+    int res = 0;
+    // n个顶点，所以需要n论遍历，每轮都找出当前未加入最小生成树，并且距离最小的点
+    for (int i = 0; i < n; i++) {
+        int t = -1;
+        // 选择一个未加入最小生成树的，距离最小生成树最近的点
+        for (int j = 1; j <= n; j++) {
+            if (state[j] == 0 && (t == -1 || dist[j] < dist[t])) {
+                t = j;
+            }
         }
-        if (state[i] == 1) {
-            continue;
+        // 将该点加入到最小生成树
+        state[t] = 1;
+        if (i != 0 && dist[t] == 0x3f3f3f3f) {
+            return 0x3f3f3f3f;
         }
-        if (a[node][i] == 0x3f3f3f3f) {
-            continue;
+        // 第一个点的dist不能累加，因为初始化的时候被设为了0x3f3f3f3f
+        if (i != 0) {
+            res += dist[t];
         }
-        int old_dist = dist[i];
-        dist[i] = min(old_dist, a[node][i]);
-        if (old_dist >= dist[i]) {
-            pre[i] = node;
-            node_unadded.erase(make_pair(old_dist, i));
-            add_to_set(i, dist[i]);
+        // 用该点去更新所有其他点到最小生成树的距离
+        for (int j = 1; j <= n; j++) {
+            dist[j] = min(dist[j], g[t][j]);
         }
     }
-}
-
-int node_num = 0;
-int total_weight = 0;
-
-void prim(int root)
-{
-    memset(dist, 0x3f, sizeof(dist));
-    dist[root] = 0;
-    pre[root] = -1;
-    add_to_set(root, dist[root]);
-    while (!node_unadded.empty()) {
-        int node = get_from_set();
-        state[node] = 1;
-        node_num++;
-        total_weight += dist[node];
-        // 更新所有未被纳入到最小生成素的相邻节点的dist，并且将其放入到node_unadded中
-        update_all_child_node(node);
-    }
+    return res;
 }
 
 int main()
 {
     cin >> n >> m;
-    // 只有一个顶点
-    if (n == 1) {
-        cout << 0;
-    }
-    int u, v, w;
-    memset(a, 0x3f, sizeof(a));
-    for (int i = 1; i <= m; i++) {
-        cin >> u >> v >> w;
-        // 处理自环
-        if (u == v) {
-            continue;
-        } else {
-            // 处理重边
-            a[u][v] = min(a[u][v], w);
-            a[v][u] = min(a[v][u], w);
+
+    memset(g, 0x3f, sizeof(g));
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (i == j) {
+                g[i][j] = 0;
+            }
         }
     }
 
-    prim(1);
+    while (m--) {
+        int a, b, c;
+        scanf("%d%d%d", &a, &b, &c);
+        g[b][a] = g[a][b] = min(g[a][b], c);
+    }
 
-    // 如果不存在最小生成树，人为的返回0x3f3f3f3f
-    if (node_num != n) {
-        cout << "impossible";
+    memset(dist, 0x3f, sizeof(dist));
+    int res = prim();
+
+    if (res > 0x3f3f3f3f / 2) {
+        cout << "impossible" << endl;
     } else {
-        cout << total_weight;
+        cout << res;
     }
 
     return 0;
